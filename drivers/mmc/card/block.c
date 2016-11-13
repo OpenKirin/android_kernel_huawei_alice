@@ -84,13 +84,10 @@ struct emmc_dsm_log g_emmc_dsm_log;
 EXPORT_SYMBOL(emmc_dclient);
 #endif
 MODULE_ALIAS("mmc:block");
-/*not referenced,modified for pclint*/
-/*
 #ifdef MODULE_PARAM_PREFIX
 #undef MODULE_PARAM_PREFIX
 #endif
 #define MODULE_PARAM_PREFIX "mmcblk."
-*/
 #ifdef CONFIG_BALONG_MTD
 enum{
 	MODEMOM_PARTITION = 0,
