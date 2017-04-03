@@ -897,7 +897,9 @@ void kbase_pm_clock_on(struct kbase_device *kbdev, bool is_resume)
 
 	if (is_resume && kbdev->pm.backend.callback_power_resume) {
 		kbdev->pm.backend.callback_power_resume(kbdev);
+#ifndef CONFIG_HISI_3635
 		return;
+#endif
 	} else if (kbdev->pm.backend.callback_power_on) {
 		kbdev->pm.backend.callback_power_on(kbdev);
 		/* If your platform properly keeps the GPU state you may use the

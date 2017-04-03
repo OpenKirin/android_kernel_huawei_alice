@@ -120,7 +120,8 @@ static int mali_mem_vma_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 			return VM_FAULT_LOCKED;
 		}
 	} else {
-		MALI_PRINT_ERROR(("Mali vma fault! It never happen, indicating some logic errors in caller.\n"));
+		MALI_DEBUG_ASSERT(0);
+		/*NOT support yet*/
 	}
 	return VM_FAULT_NOPAGE;
 }
@@ -246,8 +247,7 @@ int mali_mmap(struct file *filp, struct vm_area_struct *vma)
 		ret = 0;
 	} else {
 		/* Not support yet*/
-		MALI_DEBUG_PRINT_ERROR(("Invalid type of backend memory! \n"));
-		return -EFAULT;
+		MALI_DEBUG_ASSERT(0);
 	}
 
 	if (ret != 0) {
@@ -346,13 +346,6 @@ _mali_osk_errcode_t mali_memory_session_begin(struct mali_session_data *session_
 		MALI_ERROR(_MALI_OSK_ERR_FAULT);
 	}
 
-	session_data->cow_lock = _mali_osk_mutex_init(_MALI_OSK_LOCKFLAG_UNORDERED, 0);
-	if (NULL == session_data->cow_lock) {
-		_mali_osk_mutex_term(session_data->memory_lock);
-		_mali_osk_free(session_data);
-		MALI_ERROR(_MALI_OSK_ERR_FAULT);
-	}
-
 	mali_memory_manager_init(&session_data->allocation_mgr);
 
 	MALI_DEBUG_PRINT(5, ("MMU session begin: success\n"));
@@ -374,7 +367,7 @@ void mali_memory_session_end(struct mali_session_data *session)
 
 	/* Free the lock */
 	_mali_osk_mutex_term(session->memory_lock);
-	_mali_osk_mutex_term(session->cow_lock);
+
 	return;
 }
 
@@ -432,9 +425,8 @@ void _mali_page_node_ref(struct mali_page_node *node)
 		mali_mem_block_add_ref(node);
 	} else if (node->type == MALI_PAGE_NODE_SWAP) {
 		atomic_inc(&node->swap_it->ref_count);
-	} else {
-		MALI_DEBUG_PRINT_ERROR(("Invalid type of mali page node! \n"));
-	}
+	} else
+		MALI_DEBUG_ASSERT(0);
 }
 
 void _mali_page_node_unref(struct mali_page_node *node)
@@ -444,9 +436,8 @@ void _mali_page_node_unref(struct mali_page_node *node)
 		put_page(node->page);
 	} else if (node->type == MALI_PAGE_NODE_BLOCK) {
 		mali_mem_block_dec_ref(node);
-	} else {
-		MALI_DEBUG_PRINT_ERROR(("Invalid type of mali page node! \n"));
-	}
+	} else
+		MALI_DEBUG_ASSERT(0);
 }
 
 
@@ -480,7 +471,7 @@ int _mali_page_node_get_ref_count(struct mali_page_node *node)
 	} else if (node->type == MALI_PAGE_NODE_SWAP) {
 		return atomic_read(&node->swap_it->ref_count);
 	} else {
-		MALI_DEBUG_PRINT_ERROR(("Invalid type of mali page node! \n"));
+		MALI_DEBUG_ASSERT(0);
 	}
 	return -1;
 }
@@ -495,7 +486,7 @@ dma_addr_t _mali_page_node_get_dma_addr(struct mali_page_node *node)
 	} else if (node->type == MALI_PAGE_NODE_SWAP) {
 		return node->swap_it->dma_addr;
 	} else {
-		MALI_DEBUG_PRINT_ERROR(("Invalid type of mali page node! \n"));
+		MALI_DEBUG_ASSERT(0);
 	}
 	return 0;
 }
@@ -511,7 +502,7 @@ unsigned long _mali_page_node_get_pfn(struct mali_page_node *node)
 	} else if (node->type == MALI_PAGE_NODE_SWAP) {
 		return page_to_pfn(node->swap_it->page);
 	} else {
-		MALI_DEBUG_PRINT_ERROR(("Invalid type of mali page node! \n"));
+		MALI_DEBUG_ASSERT(0);
 	}
 	return 0;
 }

@@ -83,22 +83,7 @@ static struct resource mali_gpu_resources_m450_mp4[] =
 };
 
 extern mali_bool mali_gpu_class_is_mali450;
-/*****************************************************************************
- function name  : mali_os_suspend
- description    : os suspend
- input vars     : void
- output vars    : NA
- return value   : void
- calls          : mali_platform_power_mode_change
 
- called         : os
-
- history        :
-  1.data        : 18/10/2012
-    author      : C66698
-    modify      : new
-
-*****************************************************************************/
 static int mali_os_suspend(struct device *device)
 {
     int ret = 0;
@@ -118,23 +103,6 @@ static int mali_os_suspend(struct device *device)
 
     return ret;
 }
-
-/*****************************************************************************
- function name  : mali_os_resume
- description    : os resume
- input vars     : void
- output vars    : NA
- return value   : void
- calls          : mali_platform_power_mode_change
-
- called         : os
-
- history        :
-  1.data        : 18/10/2012
-    author      : C66698
-    modify      : new
-
-*****************************************************************************/
 static int mali_os_resume(struct device *device)
 {
     int ret = 0;
@@ -161,23 +129,6 @@ static int mali_os_resume(struct device *device)
 
     return ret;
 }
-
-/*****************************************************************************
- function name  : mali_os_freeze
- description    : os freeze
- input vars     : void
- output vars    : NA
- return value   : void
- calls          : NA
-
- called         : os
-
- history        :
-  1.data        : 18/10/2012
-    author      : C66698
-    modify      : new
-
-*****************************************************************************/
 static int mali_os_freeze(struct device *device)
 {
     int ret = 0;
@@ -195,22 +146,6 @@ static int mali_os_freeze(struct device *device)
 
     return ret;
 }
-/*****************************************************************************
- function name  : mali_os_thaw
- description    : os thaw
- input vars     : void
- output vars    : NA
- return value   : void
- calls          : NA
-
- called         : os
-
- history        :
-  1.data        : 18/10/2012
-    author      : C66698
-    modify      : new
-
-*****************************************************************************/
 static int mali_os_thaw(struct device *device)
 {
     int ret = 0;
@@ -230,22 +165,6 @@ static int mali_os_thaw(struct device *device)
 }
 
 #ifdef CONFIG_PM_RUNTIME
-/*****************************************************************************
- function name  : mali_runtime_suspend
- description    : runtime suspend
- input vars     : void
- output vars    : NA
- return value   : void
- calls          : mali_platform_power_mode_change
-
- called         : os
-
- history        :
-  1.data        : 18/10/2012
-    author      : C66698
-    modify      : new
-
-*****************************************************************************/
 static int mali_runtime_suspend(struct device *device)
 {
     int ret = 0;
@@ -264,23 +183,6 @@ static int mali_runtime_suspend(struct device *device)
 
     return ret;
 }
-
-/*****************************************************************************
- function name  : mali_runtime_resume
- description    : runtime resume
- input vars     : void
- output vars    : NA
- return value   : void
- calls          : mali_platform_power_mode_change
-
- called         : os
-
- history        :
-  1.data        : 18/10/2012
-    author      : C66698
-    modify      : new
-
-*****************************************************************************/
 static int mali_runtime_resume(struct device *device)
 {
     int ret = 0;
@@ -299,23 +201,6 @@ static int mali_runtime_resume(struct device *device)
 
     return ret;
 }
-
-/*****************************************************************************
- function name  : mali_runtime_resume
- description    : runtime resume
- input vars     : void
- output vars    : NA
- return value   : void
- calls          : mali_platform_power_mode_change
-
- called         : os
-
- history        :
-  1.data        : 18/10/2012
-    author      : C66698
-    modify      : new
-
-*****************************************************************************/
 static int mali_runtime_idle(struct device *device)
 {
 
@@ -757,23 +642,6 @@ void mali_gpu_utilization_handler(u32 utilization)
     #endif
     }
 }
-
-/*****************************************************************************
- function name  : mali_gpu_utilization_proc
- description    : mali_gpu_utilization_proc
- input vars     : void
- output vars    : NA
- return value   : void
- calls          : NA
-
- called         : os
-
- history        :
-  1.data        : 20/11/2013
-    author      : C66698
-    modify      : new
-
-*****************************************************************************/
 static void mali_gpu_utilization_proc(struct mali_gpu_utilization_data *data)
 {
     mali_gpu_utilization_handler(data->utilization_gpu);

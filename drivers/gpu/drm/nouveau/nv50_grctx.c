@@ -2098,7 +2098,7 @@ nv50_graph_construct_gene_eng2d(struct nouveau_grctx *ctx)
 	xf_emit(ctx, 1, 0);
 	xf_emit(ctx, 1, 1);		/* 0000001f tesla UNK0FB8 */
 	xf_emit(ctx, 1, 0x15);		/* 000000ff tesla UNK128C */
-	xf_emit(ctx, 2, 0);		/* 00000007, ffff0ff3 */
+	xf_emit(ctx, 2, 0);
 	xf_emit(ctx, 1, 0);
 	xf_emit(ctx, 1, 0x4444480);	/* 1fffffff UNK870 */
 	/* SEEK */
@@ -2340,7 +2340,7 @@ nv50_graph_construct_gene_strmout(struct nouveau_grctx *ctx)
 	/* SEEK */
 	xf_emit(ctx, 0x20, 0);		/* ffffffff STRMOUT_MAP */
 	xf_emit(ctx, 1, 0);		/* 0000000f */
-	xf_emit(ctx, 1, 0);		/* 00000000? */
+	xf_emit(ctx, 1, 0);
 	xf_emit(ctx, 2, 0);		/* ffffffff */
 }
 

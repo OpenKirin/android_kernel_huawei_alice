@@ -84,6 +84,7 @@ struct mali_group {
 	_mali_osk_wq_work_t         *bottom_half_work_gp;
 	_mali_osk_wq_work_t         *bottom_half_work_pp;
 
+	_mali_osk_wq_work_t         *oom_work_handler;
 	_mali_osk_timer_t           *timeout_timer;
 };
 
@@ -411,6 +412,12 @@ MALI_STATIC_INLINE void mali_group_schedule_bottom_half_gp(struct mali_group *gr
 	_mali_osk_wq_schedule_work(group->bottom_half_work_gp);
 }
 
+MALI_STATIC_INLINE void mali_group_schedule_oom_work_handler(struct mali_group *group)
+{
+	MALI_DEBUG_ASSERT_POINTER(group);
+	MALI_DEBUG_ASSERT_POINTER(group->gp_core);
+	_mali_osk_wq_schedule_work(group->oom_work_handler);
+}
 
 MALI_STATIC_INLINE void mali_group_schedule_bottom_half_pp(struct mali_group *group)
 {
