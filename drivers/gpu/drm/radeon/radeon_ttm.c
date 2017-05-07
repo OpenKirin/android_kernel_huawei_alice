@@ -206,11 +206,7 @@ static void radeon_evict_flags(struct ttm_buffer_object *bo,
 	rbo = container_of(bo, struct radeon_bo, tbo);
 	switch (bo->mem.mem_type) {
 	case TTM_PL_VRAM:
-<<<<<<< HEAD
-		if (rbo->rdev->ring[radeon_copy_ring_index(rbo->rdev)].ready == false)
-=======
 		if (rbo->rdev->cp.ready == false)
->>>>>>> 2e2397c... DTS:DTS2014041102822
 			radeon_ttm_placement_from_domain(rbo, RADEON_GEM_DOMAIN_CPU);
 		else
 			radeon_ttm_placement_from_domain(rbo, RADEON_GEM_DOMAIN_GTT);

@@ -572,15 +572,7 @@ int rs600_irq_set(struct radeon_device *rdev)
 	WREG32(R_006540_DxMODE_INT_MASK, mode_int);
 	WREG32(R_007D08_DC_HOT_PLUG_DETECT1_INT_CONTROL, hpd1);
 	WREG32(R_007D18_DC_HOT_PLUG_DETECT2_INT_CONTROL, hpd2);
-<<<<<<< HEAD
-	if (ASIC_IS_DCE2(rdev))
-		WREG32(R_007408_HDMI0_AUDIO_PACKET_CONTROL, hdmi0);
 
-	/* posting read */
-	RREG32(R_000040_GEN_INT_CNTL);
-
-=======
->>>>>>> 2e2397c... DTS:DTS2014041102822
 	return 0;
 }
 
