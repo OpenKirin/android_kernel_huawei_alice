@@ -117,19 +117,17 @@ static int parse_options(struct super_block *sb, char *options, int silent,
 			break;
 		/* unknown option */
 		default:
-			if (!silent) {
-				printk( KERN_ERR "Unrecognized mount option \"%s\" "
-						"or missing value", p);
-			}
+			if (!silent)
+				pr_err("Unrecognized mount option \"%s\" or missing value", p);
 			return -EINVAL;
 		}
 	}
 
 	if (*debug) {
-		printk( KERN_INFO "sdcardfs : options - debug:%d\n", *debug);
-		printk( KERN_INFO "sdcardfs : options - uid:%d\n",
+		pr_info("sdcardfs : options - debug:%d\n", *debug);
+		pr_info("sdcardfs : options - uid:%d\n",
 							opts->fs_low_uid);
-		printk( KERN_INFO "sdcardfs : options - gid:%d\n",
+		pr_info("sdcardfs : options - gid:%d\n",
 							opts->fs_low_gid);
 	}
 
@@ -175,22 +173,20 @@ int parse_options_remount(struct super_block *sb, char *options, int silent,
 		case Opt_fsuid:
 		case Opt_fsgid:
 		case Opt_reserved_mb:
-			printk( KERN_WARNING "Option \"%s\" can't be changed during remount\n", p);
+			pr_warn("Option \"%s\" can't be changed during remount\n", p);
 			break;
 		/* unknown option */
 		default:
-			if (!silent) {
-				printk( KERN_ERR "Unrecognized mount option \"%s\" "
-						"or missing value", p);
-			}
+			if (!silent)
+				pr_err("Unrecognized mount option \"%s\" or missing value", p);
 			return -EINVAL;
 		}
 	}
 
 	if (debug) {
-		printk( KERN_INFO "sdcardfs : options - debug:%d\n", debug);
-		printk( KERN_INFO "sdcardfs : options - gid:%d\n", vfsopts->gid);
-		printk( KERN_INFO "sdcardfs : options - mask:%d\n", vfsopts->mask);
+		pr_info("sdcardfs : options - debug:%d\n", debug);
+		pr_info("sdcardfs : options - gid:%d\n", vfsopts->gid);
+		pr_info("sdcardfs : options - mask:%d\n", vfsopts->mask);
 	}
 
 	return 0;
@@ -244,31 +240,30 @@ static int sdcardfs_read_super(struct vfsmount *mnt, struct super_block *sb,
 	struct sdcardfs_vfsmount_options *mnt_opt = mnt->data;
 	struct inode *inode;
 
-	printk(KERN_INFO "sdcardfs version 2.0\n");
+	pr_info("sdcardfs version 2.0\n");
 
 	if (!dev_name) {
-		printk(KERN_ERR
-		       "sdcardfs: read_super: missing dev_name argument\n");
+		pr_err("sdcardfs: read_super: missing dev_name argument\n");
 		err = -EINVAL;
 		goto out;
 	}
 
-	printk(KERN_INFO "sdcardfs: dev_name -> %s\n", dev_name);
-	printk(KERN_INFO "sdcardfs: options -> %s\n", (char *)raw_data);
-	printk(KERN_INFO "sdcardfs: mnt -> %p\n", mnt);
+	pr_info("sdcardfs: dev_name -> %s\n", dev_name);
+	pr_info("sdcardfs: options -> %s\n", (char *)raw_data);
+	pr_info("sdcardfs: mnt -> %p\n", mnt);
 
 	/* parse lower path */
 	err = kern_path(dev_name, LOOKUP_FOLLOW | LOOKUP_DIRECTORY,
 			&lower_path);
 	if (err) {
-		printk(KERN_ERR	"sdcardfs: error accessing lower directory '%s'\n", dev_name);
+		pr_err("sdcardfs: error accessing lower directory '%s'\n", dev_name);
 		goto out;
 	}
 
 	/* allocate superblock private data */
 	sb->s_fs_info = kzalloc(sizeof(struct sdcardfs_sb_info), GFP_KERNEL);
 	if (!SDCARDFS_SB(sb)) {
-		printk(KERN_CRIT "sdcardfs: read_super: out of memory\n");
+		pr_crit("sdcardfs: read_super: out of memory\n");
 		err = -ENOMEM;
 		goto out_free;
 	}
@@ -277,7 +272,7 @@ static int sdcardfs_read_super(struct vfsmount *mnt, struct super_block *sb,
 	/* parse options */
 	err = parse_options(sb, raw_data, silent, &debug, mnt_opt, &sb_info->options);
 	if (err) {
-		printk(KERN_ERR	"sdcardfs: invalid options\n");
+		pr_err("sdcardfs: invalid options\n");
 		goto out_freesbi;
 	}
 
@@ -285,6 +280,13 @@ static int sdcardfs_read_super(struct vfsmount *mnt, struct super_block *sb,
 	lower_sb = lower_path.dentry->d_sb;
 	atomic_inc(&lower_sb->s_active);
 	sdcardfs_set_lower_super(sb, lower_sb);
+
+	sb->s_stack_depth = lower_sb->s_stack_depth + 1;
+	if (sb->s_stack_depth > FILESYSTEM_MAX_STACK_DEPTH) {
+		pr_err("sdcardfs: maximum fs stacking depth exceeded\n");
+		err = -EINVAL;
+		goto out_sput;
+	}
 
 	/* inherit maxbytes from lower file system */
 	sb->s_maxbytes = lower_sb->s_maxbytes;
@@ -347,7 +349,7 @@ static int sdcardfs_read_super(struct vfsmount *mnt, struct super_block *sb,
 	mutex_unlock(&sdcardfs_super_list_lock);
 
 	if (!silent)
-		printk(KERN_INFO "sdcardfs: mounted on top of %s type %s\n",
+		pr_info("sdcardfs: mounted on top of %s type %s\n",
 				dev_name, lower_sb->s_type->name);
 	goto out; /* all is well */
 
@@ -476,10 +478,15 @@ static void __exit exit_sdcardfs_fs(void)
 	pr_info("Completed sdcardfs module unload\n");
 }
 
-MODULE_AUTHOR("Erez Zadok, Filesystems and Storage Lab, Stony Brook University"
-	      " (http://www.fsl.cs.sunysb.edu/)");
-MODULE_DESCRIPTION("Wrapfs " SDCARDFS_VERSION
-		   " (http://wrapfs.filesystems.org/)");
+/* Original wrapfs authors */
+MODULE_AUTHOR("Erez Zadok, Filesystems and Storage Lab, Stony Brook University (http://www.fsl.cs.sunysb.edu/)");
+
+/* Original sdcardfs authors */
+MODULE_AUTHOR("Woojoong Lee, Daeho Jeong, Kitae Lee, Yeongjin Gil System Memory Lab., Samsung Electronics");
+
+/* Current maintainer */
+MODULE_AUTHOR("Daniel Rosenberg, Google");
+MODULE_DESCRIPTION("Sdcardfs " SDCARDFS_VERSION);
 MODULE_LICENSE("GPL");
 
 module_init(init_sdcardfs_fs);

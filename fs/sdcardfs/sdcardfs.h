@@ -53,7 +53,7 @@
 #define SDCARDFS_ROOT_INO     1
 
 /* useful for tracking code reachability */
-#define UDBG printk(KERN_DEFAULT "DBG:%s:%s:%d\n", __FILE__, __func__, __LINE__)
+#define UDBG pr_default("DBG:%s:%s:%d\n", __FILE__, __func__, __LINE__)
 
 #define SDCARDFS_DIRENT_SIZE 256
 
@@ -96,20 +96,20 @@
  * placed at the beginning of a function, right after variable declaration.
  */
 #define OVERRIDE_CRED(sdcardfs_sbi, saved_cred, info)		\
-	saved_cred = override_fsids(sdcardfs_sbi, info);	\
-	if (!saved_cred) { return -ENOMEM; }
+	do {	\
+		saved_cred = override_fsids(sdcardfs_sbi, info);	\
+		if (!saved_cred)	\
+			return -ENOMEM;	\
+	} while (0)
 
 #define OVERRIDE_CRED_PTR(sdcardfs_sbi, saved_cred, info)	\
-	saved_cred = override_fsids(sdcardfs_sbi, info);	\
-	if (!saved_cred) { return ERR_PTR(-ENOMEM); }
+	do {	\
+		saved_cred = override_fsids(sdcardfs_sbi, info);	\
+		if (!saved_cred)	\
+			return ERR_PTR(-ENOMEM);	\
+	} while (0)
 
 #define REVERT_CRED(saved_cred)	revert_fsids(saved_cred)
-
-#define DEBUG_CRED()		\
-	printk("KAKJAGI: %s:%d fsuid %d fsgid %d\n", 	\
-		__FUNCTION__, __LINE__, 		\
-		(int)current->cred->fsuid, 		\
-		(int)current->cred->fsgid);
 
 /* Android 5.0 support */
 

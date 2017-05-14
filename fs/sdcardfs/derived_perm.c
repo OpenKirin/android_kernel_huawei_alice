@@ -60,6 +60,8 @@ void get_derived_permission_new(struct dentry *parent, struct dentry *dentry,
 	struct sdcardfs_inode_info *info = SDCARDFS_I(dentry->d_inode);
 	struct sdcardfs_inode_info *parent_info = SDCARDFS_I(parent->d_inode);
 	appid_t appid;
+	unsigned long user_num;
+	int err;
 	struct qstr q_Android = QSTR_LITERAL("Android");
 	struct qstr q_data = QSTR_LITERAL("data");
 	struct qstr q_obb = QSTR_LITERAL("obb");
@@ -88,7 +90,11 @@ void get_derived_permission_new(struct dentry *parent, struct dentry *dentry,
 	case PERM_PRE_ROOT:
 		/* Legacy internal layout places users at top level */
 		info->perm = PERM_ROOT;
-		info->userid = simple_strtoul(name->name, NULL, 10);
+		err = kstrtoul(name->name, 10, &user_num);
+		if (err)
+			info->userid = 0;
+		else
+			info->userid = user_num;
 		set_top(info, &info->vfs_inode);
 		break;
 	case PERM_ROOT:
@@ -208,16 +214,16 @@ void fixup_lower_ownership(struct dentry *dentry, const char *name)
 		gid = AID_MEDIA_OBB;
 		break;
 	case PERM_ANDROID_PACKAGE:
-		if (info->d_uid != 0)
+		if (uid_is_app(info->d_uid))
 			gid = multiuser_get_ext_gid(info->d_uid);
 		else
-			gid = multiuser_get_uid(info->userid, uid);
+			gid = multiuser_get_uid(info->userid, AID_MEDIA_RW);
 		break;
 	case PERM_ANDROID_PACKAGE_CACHE:
-		if (info->d_uid != 0)
-			gid = multiuser_get_cache_gid(info->d_uid);
+		if (uid_is_app(info->d_uid))
+			gid = multiuser_get_ext_cache_gid(info->d_uid);
 		else
-			gid = multiuser_get_uid(info->userid, uid);
+			gid = multiuser_get_uid(info->userid, AID_MEDIA_RW);
 		break;
 	case PERM_PRE_ROOT:
 	default:
@@ -239,7 +245,7 @@ void fixup_lower_ownership(struct dentry *dentry, const char *name)
 			error = notify_change2(path.mnt, path.dentry, &newattrs);
 		mutex_unlock(&inode->i_mutex);
 		if (error)
-			pr_err("sdcardfs: Failed to touch up lower fs gid/uid.\n");
+			pr_debug("sdcardfs: Failed to touch up lower fs gid/uid for %s\n", name);
 	}
 	sdcardfs_put_lower_path(dentry, &path);
 }
@@ -280,7 +286,7 @@ static void __fixup_perms_recursive(struct dentry *dentry, struct limit_search *
 	info = SDCARDFS_I(dentry->d_inode);
 
 	if (needs_fixup(info->perm)) {
-		list_for_each_entry(child, &dentry->d_subdirs, d_u.d_child) {
+		list_for_each_entry(child, &dentry->d_subdirs, d_child) {
 			spin_lock_nested(&child->d_lock, depth + 1);
 			if (!(limit->flags & BY_NAME) || qstr_case_eq(&child->d_name, &limit->name)) {
 				if (child->d_inode) {
@@ -293,7 +299,7 @@ static void __fixup_perms_recursive(struct dentry *dentry, struct limit_search *
 			spin_unlock(&child->d_lock);
 		}
 	} else if (descendant_may_need_fixup(info, limit)) {
-		list_for_each_entry(child, &dentry->d_subdirs, d_u.d_child) {
+		list_for_each_entry(child, &dentry->d_subdirs, d_child) {
 			__fixup_perms_recursive(child, limit, depth + 1);
 		}
 	}
@@ -311,7 +317,7 @@ inline void update_derived_permission_lock(struct dentry *dentry)
 	struct dentry *parent;
 
 	if (!dentry || !dentry->d_inode) {
-		printk(KERN_ERR "sdcardfs: %s: invalid dentry\n", __func__);
+		pr_err("sdcardfs: %s: invalid dentry\n", __func__);
 		return;
 	}
 	/* FIXME:
@@ -372,7 +378,7 @@ int is_obbpath_invalid(struct dentry *dent)
 			path_buf = kmalloc(PATH_MAX, GFP_ATOMIC);
 			if (!path_buf) {
 				ret = 1;
-				printk(KERN_ERR "sdcardfs: fail to allocate path_buf in %s.\n", __func__);
+				pr_err("sdcardfs: fail to allocate path_buf in %s.\n", __func__);
 			} else {
 				obbpath_s = d_path(&di->lower_path, path_buf, PATH_MAX);
 				if (d_unhashed(di->lower_path.dentry) ||
@@ -444,7 +450,7 @@ int setup_obb_dentry(struct dentry *dentry, struct path *lower_path)
 		 * because the sdcard daemon also regards this case as
 		 * a lookup fail.
 		 */
-		printk(KERN_INFO "sdcardfs: the sbi->obbpath is not available\n");
+		pr_info("sdcardfs: the sbi->obbpath is not available\n");
 	}
 	return err;
 }
