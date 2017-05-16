@@ -3,7 +3,7 @@ ifeq ($(OBB_PRODUCT_NAME),)
 export OBB_PRODUCT_NAME := $(HISI_TARGET_PRODUCT)
 endif
 
-kernel_path := kernel/huawei/alice/
+kernel_path := kernel/huawei/shine/
 
 ifeq ($(OBB_PRINT_CMD), true)
 KERNEL_OUT := vendor/hisi/build/delivery/$(OBB_PRODUCT_NAME)/obj/android
@@ -45,7 +45,7 @@ KERNEL_N_TARGET ?= vmlinux
 UT_EXTRA_CONFIG ?= 
 
 KERNEL_ARCH_ARM_CONFIGS := $(shell pwd)/$(kernel_path)/arch/$(KERNEL_ARCH_PREFIX)/configs
-KERNEL_GEN_CONFIG_FILE := alice_defconfig
+KERNEL_GEN_CONFIG_FILE := shine_defconfig
 KERNEL_GEN_CONFIG_PATH := $(KERNEL_ARCH_ARM_CONFIGS)/$(KERNEL_GEN_CONFIG_FILE)
 
 KERNEL_COMMON_DEFCONFIG := $(KERNEL_ARCH_ARM_CONFIGS)/$(KERNEL_DEFCONFIG)
