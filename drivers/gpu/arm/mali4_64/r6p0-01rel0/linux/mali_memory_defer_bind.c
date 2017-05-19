@@ -235,13 +235,16 @@ _mali_osk_errcode_t mali_mem_defer_bind(struct mali_gp_job *gp,
 			_mali_osk_free(bkn);
 		} else {
 			/* not enough memory will not happen */
-			MALI_DEBUG_PRINT(1, ("#BIND: NOT enough memory when binded !!## \n"));
-			MALI_DEBUG_ASSERT(0);
+			MALI_DEBUG_PRINT_ERROR(("#BIND: NOT enough memory when binded !!## \n"));
+			_mali_osk_free(gp->dmem);
+			return _MALI_OSK_ERR_NOMEM;
 		}
 	}
 
 	if (!list_empty(&gp->vary_todo)) {
-		MALI_DEBUG_ASSERT(0);
+		MALI_DEBUG_PRINT_ERROR(("#BIND:  The deferbind backend list isn't empty !!## \n"));
+		_mali_osk_free(gp->dmem);
+		return _MALI_OSK_ERR_FAULT;
 	}
 
 	dmem->flag = MALI_DEFER_BIND_MEMORY_BINDED;

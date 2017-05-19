@@ -243,6 +243,48 @@ int radeon_wb_init(struct radeon_device *rdev)
 
 	return 0;
 }
+
+/**
+ * radeon_vram_location - try to find VRAM location
+ * @rdev: radeon device structure holding all necessary informations
+ * @mc: memory controller structure holding memory informations
+ * @base: base address at which to put VRAM
+ *
+ * Function will place try to place VRAM at base address provided
+ * as parameter (which is so far either PCI aperture address or
+ * for IGP TOM base address).
+ *
+ * If there is not enough space to fit the unvisible VRAM in the 32bits
+ * address space then we limit the VRAM size to the aperture.
+ *
+ * If we are using AGP and if the AGP aperture doesn't allow us to have
+ * room for all the VRAM than we restrict the VRAM to the PCI aperture
+ * size and print a warning.
+ *
+ * This function will never fails, worst case are limiting VRAM.
+ *
+ * Note: GTT start, end, size should be initialized before calling this
+ * function on AGP platform.
+ *
+ * Note: We don't explicitly enforce VRAM start to be aligned on VRAM size,
+ * this shouldn't be a problem as we are using the PCI aperture as a reference.
+ * Otherwise this would be needed for rv280, all r3xx, and all r4xx, but
+ * not IGP.
+ *
+ * Note: we use mc_vram_size as on some board we need to program the mc to
+ * cover the whole aperture even if VRAM size is inferior to aperture size
+ * Novell bug 204882 + along with lots of ubuntu ones
+ *
+ * Note: when limiting vram it's safe to overwritte real_vram_size because
+ * we are not in case where real_vram_size is inferior to mc_vram_size (ie
+ * note afected by bogus hw of Novell bug 204882 + along with lots of ubuntu
+ * ones)
+ *
+ * Note: IGP TOM addr should be the same as the aperture addr, we don't
+ * explicitly check for that thought.
+ *
+ * FIXME: when reducing VRAM size align new size on power of 2.
+ */
 void radeon_vram_location(struct radeon_device *rdev, struct radeon_mc *mc, u64 base)
 {
 	mc->vram_start = base;
@@ -302,31 +344,9 @@ void radeon_gtt_location(struct radeon_device *rdev, struct radeon_mc *mc)
 /*
  * GPU helpers function.
  */
-
-
-/**
- * radeon_device_is_virtual - check if we are running is a virtual environment
- *
- * Check if the asic has been passed through to a VM (all asics).
- * Used at driver startup.
- * Returns true if virtual or false if not.
- */
-static bool radeon_device_is_virtual(void)
-{
-#ifdef CONFIG_X86
-	return boot_cpu_has(X86_FEATURE_HYPERVISOR);
-#else
-	return false;
-#endif
-}
-
 bool radeon_card_posted(struct radeon_device *rdev)
 {
 	uint32_t reg;
-
-	/* for pass through, always force asic_init */
-	if (radeon_device_is_virtual())
-		return false;
 
 	/* first check CRTCs */
 	if (ASIC_IS_DCE41(rdev)) {

@@ -136,9 +136,53 @@ static bool vmw_lag_lt(struct vmw_fence_queue *queue,
 {
 	struct timespec lag, cond;
 
+<<<<<<< HEAD
+	event = kzalloc(sizeof(*event), GFP_KERNEL);
+	if (unlikely(event == NULL)) {
+		DRM_ERROR("Failed to allocate an event.\n");
+		ret = -ENOMEM;
+		goto out_no_event;
+	}
+
+	event->event.base.type = DRM_VMW_EVENT_FENCE_SIGNALED;
+	event->event.base.length = sizeof(*event);
+	event->event.user_data = user_data;
+
+	event->base.event = &event->event.base;
+	event->base.file_priv = file_priv;
+	event->base.destroy = (void (*) (struct drm_pending_event *)) kfree;
+
+
+	if (flags & DRM_VMW_FE_FLAG_REQ_TIME)
+		ret = vmw_event_fence_action_queue(file_priv, fence,
+						   &event->base,
+						   &event->event.tv_sec,
+						   &event->event.tv_usec,
+						   interruptible);
+	else
+		ret = vmw_event_fence_action_queue(file_priv, fence,
+						   &event->base,
+						   NULL,
+						   NULL,
+						   interruptible);
+	if (ret != 0)
+		goto out_no_queue;
+
+	return 0;
+
+out_no_queue:
+	event->base.destroy(&event->base);
+out_no_event:
+	spin_lock_irqsave(&dev->event_lock, irq_flags);
+	file_priv->event_space += sizeof(*event);
+	spin_unlock_irqrestore(&dev->event_lock, irq_flags);
+out_no_space:
+	return ret;
+=======
 	cond = ns_to_timespec((s64) us * 1000);
 	lag = vmw_fifo_lag(queue);
 	return (timespec_compare(&lag, &cond) < 1);
+>>>>>>> 2e2397c... DTS:DTS2014041102822
 }
 
 int vmw_wait_lag(struct vmw_private *dev_priv,
@@ -165,7 +209,18 @@ int vmw_wait_lag(struct vmw_private *dev_priv,
 		if (unlikely(ret != 0))
 			return ret;
 
+<<<<<<< HEAD
+	ret = vmw_event_fence_action_create(file_priv, fence,
+					    arg->flags,
+					    arg->user_data,
+					    true);
+	if (unlikely(ret != 0)) {
+		if (ret != -ERESTARTSYS)
+			DRM_ERROR("Failed to attach event to fence.\n");
+		goto out_no_create;
+=======
 		(void) vmw_fence_pull(queue, sequence);
+>>>>>>> 2e2397c... DTS:DTS2014041102822
 	}
 	return 0;
 }
