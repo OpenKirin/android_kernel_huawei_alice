@@ -2704,6 +2704,7 @@ STATIC  int32 __init hi110x_wifi_init_module(void)
     struct proc_dir_entry *wifi_start_dir = NULL;
     struct proc_dir_entry *wifi_start_file = NULL;
 
+    ret = hi110x_sdio_init_module();
 #ifdef CONFIG_HWCONNECTIVITY
     if (!isMyConnectivityChip(CHIP_TYPE_HI110X)) {
         HWIFI_ERROR("cfg wifi chip type is not match, skip driver init");
