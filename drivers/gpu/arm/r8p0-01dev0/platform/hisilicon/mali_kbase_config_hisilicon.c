@@ -62,9 +62,10 @@ static struct kbase_io_resources io_resources = {
 #endif /* CONFIG_OF */
 
 #define KBASE_HI3650_PLATFORM_GPU_REGULATOR_NAME      "gpu"
-#ifdef CONFIG_HISI_3635
+#define KBASE_HI3635_GPU_IRDROP_ISSUE   0
+#if KBASE_HI3635_GPU_IRDROP_ISSUE
 #define KBASE_HI3635_GPU_TURBO_FREQ             360000000
-#endif /* CONFIG_HISI_3635 */
+#endif /* KBASE_HI3635_GPU_IRDROP_ISSUE */
 #define RUNTIME_PM_DELAY_TIME   100
 #define DEFAULT_POLLING_MS	20
 #define STOP_POLLING		0
@@ -73,7 +74,7 @@ static struct kbase_io_resources io_resources = {
 static struct kbase_device *kbase_dev = NULL;
 #endif
 
-#ifdef CONFIG_HISI_3635
+#if KBASE_HI3635_GPU_IRDROP_ISSUE
 struct gpufreq_switch_policy {
         struct work_struct    update;
         char name[20];
@@ -82,7 +83,7 @@ struct gpufreq_switch_policy {
         unsigned long freq;
 };
 struct gpufreq_switch_policy sw_policy;
-#endif /* CONFIG_HISI_3635 */
+#endif /* KBASE_HI3635_GPU_IRDROP_ISSUE */
 
 static inline void kbase_platform_on(struct kbase_device *kbdev)
 {
@@ -104,7 +105,7 @@ static inline void kbase_platform_off(struct kbase_device *kbdev)
 }
 
 #ifdef CONFIG_PM_DEVFREQ
-#ifdef CONFIG_HISI_3635
+#if KBASE_HI3635_GPU_IRDROP_ISSUE
 static void kbase_platform_set_policy(struct kbase_device *kbdev, const char *buf)
 {
         const struct kbase_pm_policy *new_policy = NULL;
@@ -144,7 +145,7 @@ static void handle_switch_policy(struct work_struct *work)
                 kbase_platform_set_policy(kbdev,"demand");
         }
 }
-#endif /* CONFIG_HISI_3635 */
+#endif /* KBASE_HI3635_GPU_IRDROP_ISSUE */
 
 static int mali_kbase_devfreq_target(struct device *dev, unsigned long *_freq,
 			      u32 flags)
@@ -153,9 +154,9 @@ static int mali_kbase_devfreq_target(struct device *dev, unsigned long *_freq,
 	unsigned long old_freq = kbdev->devfreq->previous_freq;
 	struct opp *opp = NULL;
 	unsigned long freq;
-#ifdef CONFIG_HISI_3635
+#if KBASE_HI3635_GPU_IRDROP_ISSUE
         struct kbase_pm_policy *cur_policy;
-#endif /* CONFIG_HISI_3635 */
+#endif /* KBASE_HI3635_GPU_IRDROP_ISSUE */
 
 	rcu_read_lock();
 	opp = devfreq_recommended_opp(dev, _freq, flags);
@@ -171,15 +172,15 @@ static int mali_kbase_devfreq_target(struct device *dev, unsigned long *_freq,
 	freq = ipa_freq_limit(IPA_GPU,freq);
 #endif
 	if (old_freq == freq)
-		goto update_target;
+		return 0;
 
-#ifdef CONFIG_HISI_3635
+#if KBASE_HI3635_GPU_IRDROP_ISSUE
         /* switch policy to always_on */
         if(old_freq <= KBASE_HI3635_GPU_TURBO_FREQ && freq > KBASE_HI3635_GPU_TURBO_FREQ ) {
                 sw_policy.freq = freq;
                 strncpy(sw_policy.name, "always_on", strlen("always_on") + 1);
                 schedule_work(&sw_policy.update);
-                return 0;
+                goto exit;
         }
 
         /* warn on work doesn't finish yet.*/
@@ -190,9 +191,9 @@ static int mali_kbase_devfreq_target(struct device *dev, unsigned long *_freq,
 
                 /* restore the freq */
                 *_freq = old_freq;
-                return 0;
+                goto exit;
         }
-#endif /* CONFIG_HISI_3635 */
+#endif /* KBASE_HI3635_GPU_IRDROP_ISSUE */
 
 	kbdev->cur_freq = freq;
 	kbdev->pre_freq = old_freq;
@@ -203,16 +204,14 @@ static int mali_kbase_devfreq_target(struct device *dev, unsigned long *_freq,
 		return -ENODEV;
 	}
 
-#ifdef CONFIG_HISI_3635
+#if KBASE_HI3635_GPU_IRDROP_ISSUE
         if(old_freq > KBASE_HI3635_GPU_TURBO_FREQ && freq <= KBASE_HI3635_GPU_TURBO_FREQ) {
                 strncpy(sw_policy.name, "demand", strlen("demand") + 1);
                 schedule_work(&sw_policy.update);
         }
-#endif /* CONFIG_HISI_3635 */
+#endif /* KBASE_HI3635_GPU_IRDROP_ISSUE */
 
-update_target:
-	*_freq = freq;
-
+exit:
 	return 0;
 }
 
@@ -438,11 +437,11 @@ static mali_bool kbase_platform_init(struct kbase_device *kbdev)
 
 	/* make devfreq function */
 	//mali_kbase_devfreq_profile.polling_ms = DEFAULT_POLLING_MS;
-#ifdef CONFIG_HISI_3635
+#if KBASE_HI3635_GPU_IRDROP_ISSUE
         /* init update work */
         sw_policy.kbdev = kbdev;
         INIT_WORK(&sw_policy.update, handle_switch_policy);
-#endif /* CONFIG_HISI_3635 */
+#endif /* KBASE_HI3635_GPU_IRDROP_ISSUE */
 #endif/*CONFIG_PM_DEVFREQ*/
 JUMP_DEVFREQ_THERMAL:
 	return MALI_TRUE;
@@ -497,10 +496,6 @@ static void pm_callback_power_off(struct kbase_device *kbdev)
 #ifdef CONFIG_MALI_MIDGARD_RT_PM
 	struct device *dev = kbdev->dev;
 	int ret = 0, retry = 0;
-
-#ifdef CONFIG_MALI_IDLE_AUTO_CLK_DIV
-	/* when GPU in idle state, auto decrease the clock rate.
-	 */
 	unsigned int tiler_lo = kbdev->tiler_available_bitmap & 0xFFFFFFFF;
 	unsigned int tiler_hi = (kbdev->tiler_available_bitmap >> 32) & 0xFFFFFFFF;
 	unsigned int l2_lo = kbdev->l2_available_bitmap & 0xFFFFFFFF;
@@ -510,7 +505,6 @@ static void pm_callback_power_off(struct kbase_device *kbdev)
 	kbase_os_reg_write(kbdev, GPU_CONTROL_REG(TILER_PWROFF_HI), tiler_hi);
 	kbase_os_reg_write(kbdev, GPU_CONTROL_REG(L2_PWROFF_LO), l2_lo);
 	kbase_os_reg_write(kbdev, GPU_CONTROL_REG(L2_PWROFF_HI), l2_hi);
-#endif
 
 #if HARD_RESET_AT_POWER_OFF
 	/* Cause a GPU hard reset to test whether we have actually idled the GPU

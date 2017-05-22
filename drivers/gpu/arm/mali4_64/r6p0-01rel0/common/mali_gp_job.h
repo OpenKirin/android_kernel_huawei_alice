@@ -65,9 +65,7 @@ struct mali_gp_job {
 	 * returning job to user. Hold executor lock when setting,
 	 * no lock needed when reading
 	 */
-	u32 heap_base_addr;                                /** < Holds the base mali addr of mem handle which is used for new heap*/
 	u32 heap_current_addr;                             /**< Holds the current HEAP address when the job has completed */
-	u32 heap_grow_size;                                /** < Holds the HEAP grow size when HEAP oom */
 	u32 perf_counter_value0;                           /**< Value of performance counter 0 (to be returned to user space) */
 	u32 perf_counter_value1;                           /**< Value of performance counter 1 (to be returned to user space) */
 	struct mali_defer_mem *dmem;                                          /** < used for defer bind to store dmem info */

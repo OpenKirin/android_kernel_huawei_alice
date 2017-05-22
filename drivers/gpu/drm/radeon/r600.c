@@ -2617,10 +2617,15 @@ int r600_init(struct radeon_device *rdev)
 		}
 	}
 
+<<<<<<< HEAD
+	/* posting read */
+	RREG32(R_000E50_SRBM_STATUS);
+
+=======
 	r = r600_audio_init(rdev);
 	if (r)
 		return r; /* TODO error handling */
-
+>>>>>>> 2e2397c... DTS:DTS2014041102822
 	return 0;
 }
 

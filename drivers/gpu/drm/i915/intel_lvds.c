@@ -861,6 +861,23 @@ bool intel_lvds_init(struct drm_device *dev)
 	int pipe;
 	u8 pin;
 
+<<<<<<< HEAD
+	/*
+	 * Unlock registers and just leave them unlocked. Do this before
+	 * checking quirk lists to avoid bogus WARNINGs.
+	 */
+	if (HAS_PCH_SPLIT(dev)) {
+		I915_WRITE(PCH_PP_CONTROL,
+			   I915_READ(PCH_PP_CONTROL) | PANEL_UNLOCK_REGS);
+	} else {
+		I915_WRITE(PP_CONTROL,
+			   I915_READ(PP_CONTROL) | PANEL_UNLOCK_REGS);
+	}
+	if (!intel_lvds_supported(dev))
+		return false;
+
+=======
+>>>>>>> 2e2397c... DTS:DTS2014041102822
 	/* Skip init on machines we know falsely report LVDS */
 	if (dmi_check_system(intel_no_lvds))
 		return false;
@@ -1014,6 +1031,14 @@ bool intel_lvds_init(struct drm_device *dev)
 		goto failed;
 
 out:
+<<<<<<< HEAD
+	lvds_encoder->is_dual_link = compute_is_dual_link_lvds(lvds_encoder);
+	DRM_DEBUG_KMS("detected %s-link lvds configuration\n",
+		      lvds_encoder->is_dual_link ? "dual" : "single");
+
+	lvds_connector->lid_notifier.notifier_call = intel_lid_notify;
+	if (acpi_lid_notifier_register(&lvds_connector->lid_notifier)) {
+=======
 	if (HAS_PCH_SPLIT(dev)) {
 		u32 pwm;
 
@@ -1035,6 +1060,7 @@ out:
 	}
 	dev_priv->lid_notifier.notifier_call = intel_lid_notify;
 	if (acpi_lid_notifier_register(&dev_priv->lid_notifier)) {
+>>>>>>> 2e2397c... DTS:DTS2014041102822
 		DRM_DEBUG_KMS("lid notifier registration failed\n");
 		dev_priv->lid_notifier.notifier_call = NULL;
 	}
