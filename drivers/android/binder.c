@@ -1122,7 +1122,7 @@ static struct binder_ref *binder_get_ref(struct binder_proc *proc,
 
 		if (desc < ref->desc) {
 			n = n->rb_left;
-		} else if (desc > ref->desc) {
+		} else if (desc > ref->desc) {
 			n = n->rb_right;
 		} else if (need_strong_ref && !ref->strong) {
 			binder_user_error("tried to use weak ref as strong ref\n");
