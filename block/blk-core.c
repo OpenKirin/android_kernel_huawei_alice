@@ -1198,6 +1198,8 @@ struct request *blk_make_request(struct request_queue *q, struct bio *bio,
 	if (unlikely(!rq))
 		return ERR_PTR(-ENOMEM);
 
+	blk_rq_set_block_pc(rq);
+
 	for_each_bio(bio) {
 		struct bio *bounce_bio = bio;
 		int ret;
@@ -1213,6 +1215,22 @@ struct request *blk_make_request(struct request_queue *q, struct bio *bio,
 	return rq;
 }
 EXPORT_SYMBOL(blk_make_request);
+
+/**
+ * blk_rq_set_block_pc - initialize a requeest to type BLOCK_PC
+ * @rq:		request to be initialized
+ *
+ */
+void blk_rq_set_block_pc(struct request *rq)
+{
+	rq->cmd_type = REQ_TYPE_BLOCK_PC;
+	rq->__data_len = 0;
+	rq->__sector = (sector_t) -1;
+	rq->bio = rq->biotail = NULL;
+	memset(rq->__cmd, 0, sizeof(rq->__cmd));
+	rq->cmd = rq->__cmd;
+}
+EXPORT_SYMBOL(blk_rq_set_block_pc);
 
 /**
  * blk_requeue_request - put a request back on queue
@@ -3194,6 +3212,9 @@ int blk_pre_runtime_suspend(struct request_queue *q)
 {
 	int ret = 0;
 
+	if (!q->dev)
+		return ret;
+
 	spin_lock_irq(q->queue_lock);
 	if (q->nr_pending) {
 		ret = -EBUSY;
@@ -3221,6 +3242,9 @@ EXPORT_SYMBOL(blk_pre_runtime_suspend);
  */
 void blk_post_runtime_suspend(struct request_queue *q, int err)
 {
+	if (!q->dev)
+		return;
+
 	spin_lock_irq(q->queue_lock);
 	if (!err) {
 		q->rpm_status = RPM_SUSPENDED;
@@ -3245,6 +3269,9 @@ EXPORT_SYMBOL(blk_post_runtime_suspend);
  */
 void blk_pre_runtime_resume(struct request_queue *q)
 {
+	if (!q->dev)
+		return;
+
 	spin_lock_irq(q->queue_lock);
 	q->rpm_status = RPM_RESUMING;
 	spin_unlock_irq(q->queue_lock);
@@ -3267,6 +3294,9 @@ EXPORT_SYMBOL(blk_pre_runtime_resume);
  */
 void blk_post_runtime_resume(struct request_queue *q, int err)
 {
+	if (!q->dev)
+		return;
+
 	spin_lock_irq(q->queue_lock);
 	if (!err) {
 		q->rpm_status = RPM_ACTIVE;
